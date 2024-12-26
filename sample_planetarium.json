@@ -1,0 +1,206 @@
+[
+  {
+    "model": "planetarium.showtheme",
+    "pk": 1,
+    "fields": {
+      "name": "Space Exploration"
+    }
+  },
+  {
+    "model": "planetarium.showtheme",
+    "pk": 2,
+    "fields": {
+      "name": "Black Holes"
+    }
+  },
+  {
+    "model": "planetarium.astronomyshow",
+    "pk": 1,
+    "fields": {
+      "title": "Journey Through the Stars",
+      "description": "A captivating show about the life of stars.",
+      "show_theme": [1]
+    }
+  },
+  {
+    "model": "planetarium.astronomyshow",
+    "pk": 2,
+    "fields": {
+      "title": "The Mysteries of Black Holes",
+      "description": "Dive into the unknown and explore black holes.",
+      "show_theme": [2]
+    }
+  },
+  {
+    "model": "planetarium.planetariumdome",
+    "pk": 1,
+    "fields": {
+      "name": "Main Dome",
+      "rows": 10,
+      "seats_in_row": 20
+    }
+  },
+  {
+    "model": "planetarium.showsession",
+    "pk": 1,
+    "fields": {
+      "astronomy_show": 1,
+      "planetarium_dome": 1,
+      "show_time": "2024-12-25T18:00:00Z"
+    }
+  },
+  {
+    "model": "planetarium.showsession",
+    "pk": 2,
+    "fields": {
+      "astronomy_show": 2,
+      "planetarium_dome": 1,
+      "show_time": "2024-12-25T20:00:00Z"
+    }
+  },
+  {
+    "model": "planetarium.reservation",
+    "pk": 1,
+    "fields": {
+      "created_at": "2024-12-23T15:00:00Z",
+      "user": 1
+    }
+  },
+  {
+    "model": "planetarium.ticket",
+    "pk": 1,
+    "fields": {
+      "row": 5,
+      "seat": 10,
+      "show_session": 1,
+      "reservation": 1
+    }
+  },
+  {
+    "model": "planetarium.ticket",
+    "pk": 2,
+    "fields": {
+      "row": 6,
+      "seat": 15,
+      "show_session": 1,
+      "reservation": 1
+    }
+  },
+  {
+    "model": "planetarium.showtheme",
+    "pk": 3,
+    "fields": {
+      "name": "Galactic Adventures"
+    }
+  },
+  {
+    "model": "planetarium.showtheme",
+    "pk": 4,
+    "fields": {
+      "name": "The Solar System"
+    }
+  },
+  {
+    "model": "planetarium.astronomyshow",
+    "pk": 3,
+    "fields": {
+      "title": "Galactic Wonders",
+      "description": "Explore the galaxies far and wide.",
+      "show_theme": [3]
+    }
+  },
+  {
+    "model": "planetarium.astronomyshow",
+    "pk": 4,
+    "fields": {
+      "title": "Our Solar System",
+      "description": "A journey through the planets and beyond.",
+      "show_theme": [4]
+    }
+  },
+  {
+    "model": "planetarium.planetariumdome",
+    "pk": 2,
+    "fields": {
+      "name": "Small Dome",
+      "rows": 5,
+      "seats_in_row": 15
+    }
+  },
+  {
+    "model": "planetarium.showsession",
+    "pk": 3,
+    "fields": {
+      "astronomy_show": 3,
+      "planetarium_dome": 2,
+      "show_time": "2024-12-26T16:00:00Z"
+    }
+  },
+  {
+    "model": "planetarium.showsession",
+    "pk": 4,
+    "fields": {
+      "astronomy_show": 4,
+      "planetarium_dome": 2,
+      "show_time": "2024-12-26T18:00:00Z"
+    }
+  },
+  {
+    "model": "planetarium.reservation",
+    "pk": 2,
+    "fields": {
+      "created_at": "2024-12-23T16:00:00Z",
+      "user": 2
+    }
+  },
+  {
+    "model": "planetarium.ticket",
+    "pk": 3,
+    "fields": {
+      "row": 3,
+      "seat": 5,
+      "show_session": 3,
+      "reservation": 2
+    }
+  },
+  {
+    "model": "planetarium.ticket",
+    "pk": 4,
+    "fields": {
+      "row": 4,
+      "seat": 10,
+      "show_session": 4,
+      "reservation": 2
+    }
+  },
+  {
+    "model": "user.user",
+    "pk": 1,
+    "fields": {
+      "email": "admin@example.com",
+      "password": "pbkdf2_sha256$216000$examplehashedpassword3",
+      "is_staff": true,
+      "is_superuser": true
+    }
+  },
+  {
+    "model": "user.user",
+    "pk": 2,
+    "fields": {
+      "email": "user2@example.com",
+      "password": "pbkdf2_sha256$216000$examplehashedpassword2",
+      "is_staff": false,
+      "is_superuser": false
+    }
+  },
+  {
+    "model": "user.user",
+    "pk": 3,
+    "fields": {
+      "email": "user1@example.com",
+      "password": "pbkdf2_sha256$216000$examplehashedpassword1",
+      "is_staff": false,
+      "is_superuser": false
+    }
+  }
+]
