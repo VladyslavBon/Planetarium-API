@@ -2,6 +2,8 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 
+from planetarium.utils import image_file_path
+
 
 class ShowTheme(models.Model):
     name = models.CharField(max_length=63)
@@ -14,6 +16,7 @@ class AstronomyShow(models.Model):
     title = models.CharField(max_length=63)
     description = models.TextField()
     show_theme = models.ManyToManyField(ShowTheme)
+    image = models.ImageField(null=True, upload_to=image_file_path)
 
     class Meta:
         ordering = ["title"]
@@ -26,6 +29,10 @@ class PlanetariumDome(models.Model):
     name = models.CharField(max_length=63)
     rows = models.IntegerField()
     seats_in_row = models.IntegerField()
+
+    @property
+    def capacity(self) -> int:
+        return self.rows * self.seats_in_row
 
     def __str__(self):
         return self.name
@@ -50,11 +57,11 @@ class Reservation(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="reservations"
     )
 
-    def __str__(self):
-        return str(self.created_at)
-
     class Meta:
         ordering = ["-created_at"]
+
+    def __str__(self):
+        return str(self.created_at)
 
 
 class Ticket(models.Model):
@@ -66,6 +73,10 @@ class Ticket(models.Model):
     reservation = models.ForeignKey(
         Reservation, on_delete=models.CASCADE, related_name="tickets"
     )
+
+    class Meta:
+        unique_together = ("show_session", "row", "seat")
+        ordering = ["row", "seat"]
 
     @staticmethod
     def validate_ticket(row, seat, planetarium_dome, error_to_raise):
@@ -106,7 +117,3 @@ class Ticket(models.Model):
 
     def __str__(self):
         return f"{str(self.show_session)} (row: {self.row}, seat: {self.seat})"
-
-    class Meta:
-        unique_together = ("show_session", "row", "seat")
-        ordering = ["row", "seat"]
