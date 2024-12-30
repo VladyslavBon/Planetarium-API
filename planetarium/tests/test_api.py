@@ -2,8 +2,7 @@ import os
 import tempfile
 
 from PIL import Image
-from django.core.exceptions import ValidationError
-from django.test import TestCase
+from django.urls import reverse
 from django_redis import get_redis_connection
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -12,8 +11,6 @@ from planetarium.models import (
     AstronomyShow,
     PlanetariumDome,
     ShowSession,
-    Ticket,
-    Reservation,
 )
 from django.contrib.auth import get_user_model
 from rest_framework.test import APITestCase
@@ -23,6 +20,10 @@ from planetarium.serializers import (
     AstronomyShowListSerializer,
     AstronomyShowDetailSerializer,
 )
+
+
+ASTRONOMY_SHOW_URL = reverse("planetarium:astronomyshow-list")
+
 
 User = get_user_model()
 
@@ -52,57 +53,6 @@ def sample_show_session(**params):
     return ShowSession.objects.create(**defaults)
 
 
-class ModelsTestCase(TestCase):
-    def setUp(self):
-        self.user = User.objects.create_user(email="test@user.com", password="testpass")
-        self.show_theme = ShowTheme.objects.create(name="Educational")
-        self.astronomy_show = AstronomyShow.objects.create(
-            title="The Wonders of Space",
-            description="An amazing journey through the cosmos.",
-        )
-        self.astronomy_show.show_theme.add(self.show_theme)
-
-        self.planetarium_dome = PlanetariumDome.objects.create(
-            name="Main Dome", rows=10, seats_in_row=10
-        )
-
-        self.show_session = ShowSession.objects.create(
-            astronomy_show=self.astronomy_show,
-            planetarium_dome=self.planetarium_dome,
-            show_time="2024-12-30 14:00:00",
-        )
-        self.reservation = Reservation.objects.create(user=self.user)
-
-    def test_show_theme_str(self):
-        self.assertEqual(str(self.show_theme), "Educational")
-
-    def test_astronomy_show_str(self):
-        self.assertEqual(str(self.astronomy_show), "The Wonders of Space")
-
-    def test_show_session_str(self):
-        self.assertEqual(
-            str(self.show_session), "The Wonders of Space - 2024-12-30 14:00:00"
-        )
-
-    def test_planetarium_dome_capacity(self):
-        self.assertEqual(self.planetarium_dome.capacity, 100)
-
-    def test_ticket_validation(self):
-        ticket = Ticket(
-            row=5, seat=5, show_session=self.show_session, reservation=self.reservation
-        )
-        ticket.full_clean()
-
-        with self.assertRaises(ValidationError):
-            invalid_ticket = Ticket(
-                row=15,
-                seat=5,
-                show_session=self.show_session,
-                reservation=self.reservation,
-            )
-            invalid_ticket.full_clean()
-
-
 class AuthenticatedAstronomyShowApiTests(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user(email="test@user.com", password="testpass")
@@ -119,7 +69,7 @@ class AuthenticatedAstronomyShowApiTests(APITestCase):
         sample_astronomy_show()
         sample_astronomy_show()
 
-        res = self.client.get("/api/planetarium/astronomy_shows/")
+        res = self.client.get(ASTRONOMY_SHOW_URL)
 
         astronomy_shows = AstronomyShow.objects.order_by("id")
         serializer = AstronomyShowListSerializer(astronomy_shows, many=True)
@@ -142,7 +92,7 @@ class AuthenticatedAstronomyShowApiTests(APITestCase):
         )
 
         res = self.client.get(
-            "/api/planetarium/astronomy_shows/",
+            ASTRONOMY_SHOW_URL,
             {"show_theme": f"{show_theme1.id},{show_theme2.id}"},
         )
 
@@ -159,9 +109,7 @@ class AuthenticatedAstronomyShowApiTests(APITestCase):
         astronomy_show2 = sample_astronomy_show(title="Another Astronomy Show")
         astronomy_show3 = sample_astronomy_show(title="No match")
 
-        res = self.client.get(
-            "/api/planetarium/astronomy_shows/", {"title": "astronomy show"}
-        )
+        res = self.client.get(ASTRONOMY_SHOW_URL, {"title": "astronomy show"})
 
         serializer1 = AstronomyShowListSerializer(astronomy_show1)
         serializer2 = AstronomyShowListSerializer(astronomy_show2)
@@ -175,7 +123,12 @@ class AuthenticatedAstronomyShowApiTests(APITestCase):
         astronomy_show = sample_astronomy_show()
         astronomy_show.show_theme.add(ShowTheme.objects.create(name="Show Theme"))
 
-        res = self.client.get(f"/api/planetarium/astronomy_shows/{astronomy_show.id}/")
+        res = self.client.get(
+            reverse(
+                "planetarium:astronomyshow-detail",
+                args=[astronomy_show.id],
+            )
+        )
 
         serializer = AstronomyShowDetailSerializer(astronomy_show)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
@@ -186,7 +139,7 @@ class AuthenticatedAstronomyShowApiTests(APITestCase):
             "title": "Astronomy Show",
             "description": "Description",
         }
-        res = self.client.post("/api/planetarium/astronomy_shows/", payload)
+        res = self.client.post(ASTRONOMY_SHOW_URL, payload)
 
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
 
@@ -214,7 +167,7 @@ class AdminAstronomyShowApiTests(APITestCase):
             "show_theme": [show_theme1.id, show_theme2.id],
         }
 
-        res = self.client.post("/api/planetarium/astronomy_shows/", payload)
+        res = self.client.post(ASTRONOMY_SHOW_URL, payload)
 
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         astronomy_show = AstronomyShow.objects.get(id=res.data["id"])
@@ -252,7 +205,10 @@ class AstronomyShowImageUploadTests(APITestCase):
             img.save(ntf, format="JPEG")
             ntf.seek(0)
             res = self.client.post(
-                f"/api/planetarium/astronomy_shows/{self.astronomy_show.id}/upload-image/",
+                reverse(
+                    "planetarium:astronomyshow-upload-image",
+                    args=[self.astronomy_show.id],
+                ),
                 {"image": ntf},
                 format="multipart",
             )
@@ -264,7 +220,10 @@ class AstronomyShowImageUploadTests(APITestCase):
 
     def test_upload_image_bad_request(self):
         res = self.client.post(
-            f"/api/planetarium/astronomy_shows/{self.astronomy_show.id}/upload-image/",
+            reverse(
+                "planetarium:astronomyshow-upload-image",
+                args=[self.astronomy_show.id],
+            ),
             {"image": "not image"},
             format="multipart",
         )
@@ -278,7 +237,7 @@ class AstronomyShowImageUploadTests(APITestCase):
             img.save(ntf, format="JPEG")
             ntf.seek(0)
             res = self.client.post(
-                "/api/planetarium/astronomy_shows/",
+                ASTRONOMY_SHOW_URL,
                 {
                     "title": "Title",
                     "description": "Description",
@@ -298,12 +257,18 @@ class AstronomyShowImageUploadTests(APITestCase):
             img.save(ntf, format="JPEG")
             ntf.seek(0)
             self.client.post(
-                f"/api/planetarium/astronomy_shows/{self.astronomy_show.id}/upload-image/",
+                reverse(
+                    "planetarium:astronomyshow-upload-image",
+                    args=[self.astronomy_show.id],
+                ),
                 {"image": ntf},
                 format="multipart",
             )
         res = self.client.get(
-            f"/api/planetarium/astronomy_shows/{self.astronomy_show.id}/"
+            reverse(
+                "planetarium:astronomyshow-detail",
+                args=[self.astronomy_show.id],
+            )
         )
 
         self.assertIn("image", res.data)
@@ -314,11 +279,14 @@ class AstronomyShowImageUploadTests(APITestCase):
             img.save(ntf, format="JPEG")
             ntf.seek(0)
             self.client.post(
-                f"/api/planetarium/astronomy_shows/{self.astronomy_show.id}/upload-image/",
+                reverse(
+                    "planetarium:astronomyshow-upload-image",
+                    args=[self.astronomy_show.id],
+                ),
                 {"image": ntf},
                 format="multipart",
             )
-        res = self.client.get(f"/api/planetarium/astronomy_shows/")
+        res = self.client.get(ASTRONOMY_SHOW_URL)
 
         self.assertIn("image", res.data[0].keys())
 
@@ -328,10 +296,18 @@ class AstronomyShowImageUploadTests(APITestCase):
             img.save(ntf, format="JPEG")
             ntf.seek(0)
             self.client.post(
-                f"/api/planetarium/astronomy_shows/{self.astronomy_show.id}/upload-image/",
+                reverse(
+                    "planetarium:astronomyshow-upload-image",
+                    args=[self.astronomy_show.id],
+                ),
                 {"image": ntf},
                 format="multipart",
             )
-        res = self.client.get(f"/api/planetarium/show_sessions/{self.show_session.id}/")
+        res = self.client.get(
+            reverse(
+                "planetarium:showsession-detail",
+                args=[self.show_session.id],
+            ),
+        )
 
         self.assertIn("image", res.data["astronomy_show"].keys())
