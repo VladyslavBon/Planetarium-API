@@ -1,3 +1,13 @@
 venv/
 python-version
 .env
+.idea/
+*.iml
+.pytest_cache/
+**__pycache__/
+.dockerignore
+.git
+.gitignore
+docker-compose.yml
+Dockerfile
+README.md
