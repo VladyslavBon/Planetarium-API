@@ -26,6 +26,7 @@ from drf_spectacular.views import (
     SpectacularRedocView,
 )
 
+
 urlpatterns = (
     [
         path("admins/", admin.site.urls),

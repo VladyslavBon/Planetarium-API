@@ -21,7 +21,6 @@ from planetarium.models import (
 )
 from planetarium.paginators import ReservationPagination
 from planetarium.permissions import IsAdminOrIfAuthenticatedReadOnly
-
 from planetarium.serializers import (
     ShowThemeSerializer,
     PlanetariumDomeSerializer,

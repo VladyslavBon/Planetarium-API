@@ -10,6 +10,7 @@ from planetarium.models import (
     ShowSession,
 )
 
+
 CACHE_PATTERNS = {
     ShowTheme: "*show_theme_view*",
     PlanetariumDome: "*planetarium_dome_view*",
