@@ -225,6 +225,10 @@ class ReservationViewSet(
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
-    @method_decorator(cache_page(60 * 5, key_prefix="reservation_view"))
+    @method_decorator(
+        cache_page(
+            60 * 5, key_prefix=lambda request: f"reservation_view_{request.user.id}"
+        )
+    )
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
